@@ -1,0 +1,390 @@
+---
+title: "Assignment Template"
+output:
+  pdf_document: default
+  html_document: default
+date: "2024-11-08"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+*The following is a template .rmd RMarkdown file for you to use for your homework submission.*
+
+*Please Knit your .rmd to a PDF format or HTML and submit that with no identifiers like your name.*
+
+*To create a PDF, first install tinytex and load the package. Then press the Knit arrow and select "Knit to PDF".*
+
+## QUESTION 01: Data Visualisation for Science Communication
+
+*Create a figure using the Palmer Penguin dataset that is correct but badly communicates the data. **Do not make a boxplot**.*
+
+*Use the following references to guide you:*
+
+-   [*https://www.nature.com/articles/533452a*](https://www.nature.com/articles/533452a){.uri}
+-   [*https://elifesciences.org/articles/16800*](https://elifesciences.org/articles/16800){.uri}
+
+*Note: Focus on visual elements rather than writing misleading text on it.*
+
+### a) Provide your figure here:
+
+```{r bad figure code, echo=FALSE}
+
+# There is no need to provide the code for your bad figure, just use echo=FALSE so the code is hidden. Make sure your figure is visible after you knit it. 
+
+#load libraries and functions:
+
+source("functions/libraries.r")
+source("functions/cleaning.r")
+source("functions/plotting.r")
+
+#clean the data:
+
+clean_data_bad_figure <- cleaning_data(penguins_raw)
+clean_subset_bad_figure <- clean_data_bad_figure %>%
+  filter(!is.na(sex)) %>%
+  filter(!is.na(species)) %>%
+  filter(!is.na(body_mass_g)) %>%
+  filter(!is.na(culmen_length_mm)) %>%
+  select(sex, species, body_mass_g, culmen_length_mm)
+
+
+#plot the figure:
+
+ggplot(clean_subset_bad_figure, aes(x = body_mass_g, y = culmen_length_mm)) + #specifies the data used to make the plot and the axes of the plot
+  geom_point(aes(color = sex, shape = species), size = 4) + # makes points colored by sex, shaped by species and makes points large
+  scale_x_continuous(
+    trans = 'log10', #converts x-axis scale to a log10 scale
+    breaks = c(3000,4000,5000,6000),
+    labels = c("3000", "4000", "5000", "6000")) +
+  scale_color_manual(values = c("FEMALE" = "green", "MALE" = "red")) + # Customs colors for sex
+  scale_shape_manual(values = c("Adelie" = 15, "Gentoo" = 16, "Chinstrap" = 17)) + # Customs shapes for species
+  labs(
+    title = "Scatter Plot of Culmen Length vs Body Mass",  
+    x = "Body Mass (g)",  
+    y = "Culmen Length (mm)",  
+    color = "Sex",  # Legends label for color
+    shape = "Species"  # Legends label for shape
+  ) +
+  theme_minimal() + 
+  theme(
+    plot.background = element_rect(fill = "#5A9BD4", color = NA), # Sets the background color to a specific chade of blue
+    legend.position = "right", # Positions the legend on the right
+    plot.title = element_text(hjust = 0.5) # Centers the plot title
+  )
+
+
+
+```
+
+### b) Write about how your design choices mislead the reader about the underlying data (100-300 words).
+
+Firstly, I applied a logarithmic scale to my x-axis. This is misleading because it visually emphasises the trends in the lower range of x-values than in the higher range of x-values (the trends in the lower range occupy more space on the figure). In this case, because the positive correlation is sharper in the x-value interval 3000-4000 than in the interval 4000-6000, the logarithmic scale it makes the overall positive correlation appear sharper. Using such unjustified logarithmic scale has been shown to be misleading for viewers (Rho, J et al. 2024).
+
+Secondly, the points on the graph are too large and densely grouped, thus causing much overlap between the points. Moreover, the points have no transparency to them, so it is difficult to distinguish individual points where points overlap.
+
+Thirdly, the color don't communicate the data well: the points'colors (red and green) are not distinguishable by many color-blind people. Such color blindness is wide-spread: it concerns about 8% of European Caucasian (Birch. 2012). Such color-blind people thus can't distinguish the points representing females from males. Moreover the blue background doesn't make the title, axis and legend stand out much, a simple white background would have been more efficient.
+
+Finally the plot is arguably overcharged: too many variables are represented. this can make it it difficult for viewers to processprocess the trends
+
+------------------------------------------------------------------------
+
+## QUESTION 2: Data Pipeline
+
+*Write a data analysis pipeline in your .rmd RMarkdown file. You should be aiming to write a clear explanation of the steps as well as clear code.*
+
+*Your code should include the steps practiced in the lab session:*
+
+-   *Load the data*
+
+-   *Appropriately clean the data*
+
+-   *Create an Exploratory Figure (**not a boxplot**)*
+
+-   *Save the figure*
+
+-   ***New**: Run a statistical test*
+
+-   ***New**: Create a Results Figure*
+
+-   *Save the figure*
+
+*An exploratory figure shows raw data, such as the distribution of the data. A results figure demonstrates the stats method chosen, and includes the results of the stats test or model.*
+
+*Between your code, communicate clearly what you are doing and why.*
+
+*Your text should include:*
+
+-   *Introduction*
+
+-   *Hypothesis*
+
+-   *Stats Method*
+
+-   *Results*
+
+-   *Discussion*
+
+-   *Conclusion*
+
+*You will be marked on the following:*
+
+### a) Your code for readability and functionality
+
+### b) Your figures for communication
+
+### c) Your text communication of your analysis
+
+*Below is a template you can use.*
+
+------------------------------------------------------------------------
+
+## [I. Introduction:]{.underline}
+
+Directly measuring penguins' body weight can be an invasive procedures for penguins, and a costly procedure for scientists. On the other side, flipper length can perhaps be measured through less invasive techniques such as through photographs. This analysis aims to determine if penguins' body weight can be predicted from their flipper's length. This analysis uses a data set containing direct measurements of the body weight and flipper's length of hundreds of penguins.
+
+### Hypothesis:
+
+I hypothesize that there is a significant correlation between penguins flipper's length and body weight, that allows to predict body weight based on flipper length.
+
+Prior to test this hypothesis, let's clean our data
+
+### Data cleaning:
+
+let's first load into this file the functions and libraries we have defined in our "functions" folder:
+
+```{r loading functions and libraries, echo = TRUE}
+source("functions/libraries.r")
+source("functions/cleaning.r")
+source("functions/plotting.r")
+```
+
+Our raw data is found in the palmerpenguin() library, under the name "penguins_raw". let's first save our raw data in our data folder, under the file name "penguins_data_raw".
+
+```{r saving the raw data, echo = TRUE}
+
+head(penguins_raw) # shows the first 6 rows of the data
+write.csv(penguins_raw, "data/penguins_data_raw.csv") # saves the raw data
+
+```
+
+Now let's clean this data and save the clean data in the "data" folder, under the file name "penguins_data_clean":
+
+```{r cleaning the data, echo = TRUE}
+penguins_data_clean <- cleaning_data(penguins_raw) #cleans the data
+
+head(penguins_data_clean) #displays the first 6 rows of "penguins_data_clean"
+
+write.csv(penguins_data_clean, "data/penguins_data_clean.csv") #saves the data
+
+```
+
+Let's now select just the subset of columns and rows we are interested in, and let's save this data in the data folder, under the name file "flipper_mass_data_clean"
+
+```{r data of interest, echo = TRUE}
+flipper_mass_data_clean <- remove_empty_flipper_mass(penguins_data_clean) #selects the columns of interest and remove rows with NA values
+
+write.csv(flipper_mass_data_clean, "data/flipper_mass_data_clean.csv") #saves the data
+
+
+head(flipper_mass_data_clean) #displays the first 6 rows of the data
+
+```
+
+### [II. Data exploration:]{.underline}
+
+Let's plot a scatter plot as our exploratory figure, to get an idea of our data's behaviour. As our aim is to predict body mass from the flipper's length, let's make body mass our dependent variable, and flipper's length our independent variable.
+
+```{r exploratory figure, echo = TRUE}
+exploratory_figure <- plot_exploratory_figure(flipper_mass_data_clean)
+exploratory_figure
+```
+
+Let's save this exploratory figure, in the "figures" folder, under the name "exploratory_figure". We will save this figure both as a png and as a svg:
+
+```{r save exploratory figure, echo = TRUE}
+#saving as a png:
+save_figure_png(plot_exploratory_figure, flipper_mass_data_clean,
+  "figures/exploratory_figure.png",
+  size = 15, res = 600, scaling =1)
+
+#saving as a svg:
+save_figure_svg(plot_exploratory_figure, flipper_mass_data_clean,
+  "figures/exploratory_figure.svg",
+  size = 15, scaling = 1)
+```
+
+### [IV. Statistical Methods:]{.underline}
+
+Our aim is to get the equation of the curve with the best fit to our data, in order to predict body mass from flipper's length. From the exploratory figure, it seems appropriate to try to fit a linear model to this data, with body mass as the dependent variable and flipper length as the independent variable. However, let's first test the assumptions of a linear model to determine if a linear regression is an adapted statistical analysis for this data, and to determine if we need to transform the data.
+
+#### 1) Assessment of the assumptions;
+
+The assumptions of a linear regression are:
+
+-   independence of observations
+
+-   linearity of the relationship
+
+-   homoscedasticity of the residuals
+
+-   normality of the residuals
+
+We assume that the observations are independent. From the exploratory figure we can also assume that the relationship is linear (the points form an approximately straight line).
+
+Let's assess homoscedasticity and normality of the residuals.
+
+To test those assumptions we first need to fit a linear model to our data:
+
+```{r fit a linear model, echo = TRUE}
+lm_flipper_mass <- lm(body_mass_g ~ flipper_length_mm, data = flipper_mass_data_clean)
+```
+
+let's first assess those assumptions graphically: let's plot a Q-Q plot to assess normality, and a residual vs. fitted value plot to assess homoscedasticity:
+
+```{r assumptions assessment figures, echo = TRUE}
+#plot the assumptions assessment figure
+assumption_assessment_figure <- plot_assumptions_assessment_figure(lm_flipper_mass)
+assumption_assessment_figure
+
+##save the figure:
+
+#as a png:
+save_figure_png(plot_assumptions_assessment_figure, lm_flipper_mass,
+  "figures/assumptions_assessment_figure.png",
+  size = 15, res = 600, scaling =1) 
+
+#as a svg:
+save_figure_svg(plot_assumptions_assessment_figure, lm_flipper_mass,
+  "figures/assumptions_assessment_figure.svg",
+  size = 15, scaling = 1)
+
+
+```
+
+On the Q-Q plot, the points follow a rather straight line, thus suggesting that the normality assumption is met. On the residuals vs. fitted values plot, the points look rather randomly distributed, thus suggesting the homoscedasticity assumption is met.
+
+Let's test those assumptions statistically to be sure:
+
+first let's test for homoscedasticity using a White Test:
+
+```{r White Test, echo = TRUE}
+white_test <- bptest(lm_flipper_mass, ~ fitted(lm_flipper_mass) + I(fitted(lm_flipper_mass)^2))
+print(white_test)
+```
+
+The p-value\>0.05 so the assumption of homoscedasticity is met
+
+Now let's test for normality of the residuals using a Shapiro-Wilk test:
+
+```{r Shapiro-Wilk Test, echo = TRUE}
+shapiro.test(resid(lm_flipper_mass))
+
+```
+
+The p-value\>0.05 so the normality assumption is met.
+
+All the assumptions are met with this non-transformed data. We can therefore fit a linear model to our data, without needing to transform our data.
+
+#### 2) Linear regression:
+
+Let's summarize the main outputs of our linear model
+
+```{r linear model, echo = TRUE}
+lm_flipper_mass_summary <- summary(lm_flipper_mass) # gives a summary of the linear model
+lm_flipper_mass_summary
+
+```
+
+From those outputs we can extract the slope and the intercept of the regression line, in order to construct the equation of that regression line:
+
+```{r equation, echo = TRUE}
+intercept <- round(coef(lm_flipper_mass_summary)[1], 2) #extracts the value of the intercept rounded at 2 decimal places
+slope <- round(coef(lm_flipper_mass_summary)[2], 2) #extracts the value of the slope rounded at 2 decimal places
+equation <- paste ("y =", intercept, "+", slope, "x") #constructs the equation as a character string
+print(equation)
+
+```
+
+### [V. Results & Discussion:]{.underline}
+
+#### 1) Results:
+
+the slope of the regression line is positive (49.69) and its p-value is well below 0.05. Therefore there is a statistically significant positive correlation between flipper length and body mass. The R-squared value is 0.759, so 75.9% of the variance in body mass is explained by the model. Therefore flipper length is a good predictor for body mass. My initial hypothesis is thus supported by evidence.
+
+Let's produce a results figure - a scatter plot with the regression line and it's equation
+
+```{r Plotting Results, echo = TRUE}
+plot_results_figure(flipper_mass_data, lm_flipper_mass_summary)
+plot_results_figure
+
+```
+
+let's save this figure, both as a png and svg:
+
+```{r save results figure, echo = TRUE}
+
+#save as a png:
+save_figure_png(plot_results_figure, flipper_mass_data_clean,
+  "figures/results_figure.png",
+  size = 15, res = 600, scaling =1,
+  lm_model = lm_flipper_mass_summary)
+
+#save it as a svg:
+save_figure_svg(plot_results_figure,
+  flipper_mass_data_clean,
+  "figures/results_figure.svg",
+  size = 15, scaling = 1,
+  lm_model = lm_flipper_mass_summary)
+
+```
+
+#### 2) Discussions:
+
+Our simple linear model fits the data well and seems reasonably useful for predicting penguin's body mass from flipper length. Further analysis could focus on how different variables - such as sex and species - affect this model. It is likely that the relationship between flipper length and body mass is sex and species specific. It would therefore be useful to produce models that are sex and species specific as they are likely to be better at predicting body mass from flipper length. Finally it would be interesting to compare how morphological variables other than flipper length can predict body mass. This could allow - for a given research context - identification of the morphological variable which best reflects body mass and which is easiest to directly measure.
+
+### [VI. Conclusion:]{.underline}
+
+We have fitted a linear model, with flipper length as the independent variable and body mass as the dependent variable. The model reveals that there is a statistically significant positive correlation between the 2 variables, and that flipper length is a good predictor for body mass in penguins. This simple model reasonably estimate body mass from flipper length.
+
+------------------------------------------------------------------------
+
+## QUESTION 3: Open Science
+
+### a) GitHub
+
+*Upload your RProject you created for **Question 2** and any files and subfolders used to GitHub. Do not include any identifiers such as your name. Make sure your GitHub repo is public.*
+
+*GitHub link:*
+
+*You will be marked on your repo organisation and readability.*
+
+### b) Share your repo with a partner, download, and try to run their data pipeline.
+
+*Partner's GitHub link:*
+
+*You **must** provide this so I can verify there is no plagiarism between you and your partner.*
+
+### c) Reflect on your experience running their code. (300-500 words)
+
+-   *What elements of your partner's code helped you to understand and run their data pipeline?*
+
+-   *Did it run? Did you need to fix anything?*
+
+-   *What suggestions would you make for improving their code to make it more understandable or reproducible, and why?*
+
+-   *If you needed to alter your partner's figure using their code, do you think that would be easy or difficult, and why?*
+
+### d) Reflect on your own code based on your experience with your partner's code and their review of yours. (300-500 words)
+
+-   *What improvements did they suggest, and do you agree?*
+
+-   *What did you learn about writing code for other people?*
+
+### e) What are the main barriers for scientists to share their data and code, and what could be done to overcome them? (500-700 words)
+
+-   Maitner et al. Code sharing increases citations, but remains uncommon. <https://doi.org/10.21203/rs.3.rs-3222221/v1>
+-   Trisovic et al. A large-scale study on research code quality and execution. <https://rdcu.be/dZB7x>
+-   A Rock-Star Researcher Spun a Web of Lies—and Nearly Got Away with It. <https://thewalrus.ca/a-rock-star-researcher-spun-a-web-of-lies-and-nearly-got-away-with-it/>
+-   Gomes et al. Why don't we share data and code? Perceived barriers and benefits to public archiving practices <https://doi.org/10.1098/rspb.2022.1113>
